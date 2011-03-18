@@ -17,6 +17,21 @@ Example using GZIP compression. Runs 3 times with a 500mb dummy:
 	pluk -n3 -s500 -t compress-gz
 
 
+EXAMPLE
+=======
+
+$ pluk -n5 -s500 -t compress-lzo
+Running LZO Compression..
+
+  #1	2.60s
+  #2	2.53s
+  #3	2.36s
+  #4	2.50s
+  #5	2.44s
+
+Average: 2.49s
+
+
 LICENSE
 =======
 
