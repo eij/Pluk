@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.2"
+VERSION="0.3"
 
 #	Settings
 
@@ -13,6 +13,8 @@ TEST_ITERATIONS="1"
 
 #	Generic Functions
 
+function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please, install it." >&2; exit 1; }; }
+
 function mk-dummy { dd if=/dev/zero of=$DUMMY bs=1MB count=$DUMMY_SIZE >/dev/null 2>&1; }
 
 function rm-dummy { rm -f $DUMMY*; }
@@ -24,26 +26,36 @@ function parse-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $
 function run-test {
 	case $1 in
 		compress-gz)
+			is-installed gzip
+
 			echo -e "Running GZIP Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "gzip -q $DUMMY"
 			;;
 		compress-xz)
+			is-installed xz
+
 			echo -e "Running XZ Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "xz -q $DUMMY"
 			;;
 		compress-bz2)
+			is-installed bzip2
+
 			echo -e "Running BZIP2 Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "bzip2 -q $DUMMY"
 			;;
 		compress-lzo)
+			is-installed lzop
+
 			echo -e "Running LZO Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "lzop -q $DUMMY"
 			;;
 		compress-7z)
+			is-installed 7z
+
 			echo -e "Running 7z Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY"
@@ -92,6 +104,8 @@ function compress-generic {
 function display-version { echo -e "Pluk $VERSION\nA simple benchmarking tool."; }
 
 function display-help {
+	echo "Usage: pluk [OPTIONS] -t <TEST>"
+	echo
 	echo "  -h		display this help"
 	echo "  -l		display available tests"
 	echo "  -v              display version number"
