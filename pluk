@@ -36,7 +36,7 @@ function run-test {
 		compress-7z)
 			echo -e "Running 7z Compression..\n"
 
-			compress-generic $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY >/dev/null 2>&1"
+			compress-generic $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY"
 			;;
 		*)
 			echo -e "Test not found.\n"
@@ -59,7 +59,7 @@ function compress-generic {
 
 		_START=`date +%s.%N`
 
-		$2
+		$2 >/dev/null 2>&1
 
 		_STOP=`date +%s.%N`
 
