@@ -28,10 +28,20 @@ function run-test {
 
 			compress-generic $TEST_ITERATIONS "gzip -q $DUMMY"
 			;;
+		compress-xz)
+			echo -e "Running XZ Compression..\n"
+
+			compress-generic $TEST_ITERATIONS "xz -q $DUMMY"
+			;;
 		compress-bz2)
 			echo -e "Running BZIP2 Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "bzip2 -q $DUMMY"
+			;;
+		compress-lzo)
+			echo -e "Running LZO Compression..\n"
+
+			compress-generic $TEST_ITERATIONS "lzop -q $DUMMY"
 			;;
 		compress-7z)
 			echo -e "Running 7z Compression..\n"
@@ -95,8 +105,10 @@ function display-tests {
 	echo "Compress Tests"
 	echo
 	echo "  compress-gz             GZIP algorithm"
-	echo "  compress-7z             LZMA algorithm"
+	echo "  compress-xz             XZ algorithm"
 	echo "  compress-bz2            BZIP2 algorithm"
+	echo "  compress-lzo            LZO algorithm"
+	echo "  compress-7z             LZMA algorithm"
 }
 
 
