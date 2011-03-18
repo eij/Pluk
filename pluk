@@ -1,0 +1,141 @@
+#!/bin/bash
+
+VERSION="0.2"
+
+#	Settings
+
+DUMMY="/tmp/.dummy-$RANDOM"
+DUMMY_SIZE="1024"
+
+TEST_ITERATIONS="1"
+
+
+
+#	Generic Functions
+
+function mk-dummy { dd if=/dev/zero of=$DUMMY bs=1MB count=$DUMMY_SIZE >/dev/null 2>&1; }
+
+function rm-dummy { rm -f $DUMMY*; }
+
+function diff-time { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
+
+function parse-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`s"; }
+
+function run-test {
+	case $1 in
+		compress-gz)
+			echo -e "Running GZIP Compression..\n"
+
+			compress-generic $TEST_ITERATIONS "gzip -q $DUMMY"
+			;;
+		compress-bz2)
+			echo -e "Running BZIP2 Compression..\n"
+
+			compress-generic $TEST_ITERATIONS "bzip2 -q $DUMMY"
+			;;
+		compress-7z)
+			echo -e "Running 7z Compression..\n"
+
+			compress-generic $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY >/dev/null 2>&1"
+			;;
+		*)
+			echo -e "Test not found.\n"
+
+			display-tests
+
+			exit 0
+			;;
+	esac
+}
+
+
+
+#	Tests
+
+function compress-generic {
+	for ((i=1; i <= $1; i++))
+	do
+		mk-dummy
+
+		_START=`date +%s.%N`
+
+		$2
+
+		_STOP=`date +%s.%N`
+
+		_RES=`diff-time $_STOP $_START`
+
+		_AVG=`echo $_AVG $_RES | awk '{printf("%.2f", $1+$2)}'`
+
+		echo "  #$i	$_RES"s
+
+		rm-dummy
+	done
+
+	parse-result $_AVG $1
+}
+
+
+
+#	Lists
+
+function display-version { echo -e "Pluk $VERSION\nA simple benchmarking tool."; }
+
+function display-help {
+	echo "  -h		display this help"
+	echo "  -l		display available tests"
+	echo "  -v              display version number"
+	echo
+	echo "  -n <N>          number of tests (default 1)"
+	echo "  -s <N>          size of the dummy file in MB (default 1024)"
+	echo "  -t <test>	run specific test"
+}
+
+function display-tests {
+	echo "Compress Tests"
+	echo
+	echo "  compress-gz             GZIP algorithm"
+	echo "  compress-7z             LZMA algorithm"
+	echo "  compress-bz2            BZIP2 algorithm"
+}
+
+
+
+while getopts  "hlvs:n:t:" OPT
+do
+
+	case $OPT in
+		h)
+			display-help
+
+			exit 0
+			;;
+		l)
+			display-tests
+
+			exit 0
+			;;
+		n)
+			TEST_ITERATIONS=$OPTARG
+			;;
+		s)
+			DUMMY_SIZE=$OPTARG
+			;;
+		t)
+			run-test $OPTARG
+
+			exit 0
+			;;
+		v)
+			display-version
+
+			exit 0
+			;;
+		*)
+			display-help
+
+			exit 0
+			;;
+	esac
+
+done

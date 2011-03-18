@@ -1,0 +1,23 @@
+DESCRIPTION
+===========
+
+Simple benchmarking tool for Bash.
+
+
+USAGE
+=====
+
+To get a list of the available tests, use:
+
+	pluk -l
+
+
+Example using GZIP compression. Runs 3 times with a 500mb dummy:
+
+	pluk -n3 -s500 -t compress-gz
+
+
+LICENSE
+=======
+
+GPL2
