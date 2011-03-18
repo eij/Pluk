@@ -23,7 +23,7 @@ function diff-time { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
 
 function print-dummy { echo -e "Dummy $DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
 
-function print-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`s"; }
+function print-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`$3"; }
 
 function run-test {
 	case $1 in
@@ -51,7 +51,7 @@ function run-test {
 		compress-lzo)
 			is-installed lzop
 
-			echo -e "Running LZOP Compression..\n"
+			echo -e "Running LZO Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "lzop -q $DUMMY"
 			;;
@@ -61,6 +61,13 @@ function run-test {
 			echo -e "Running 7z Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY"
+			;;
+		openssl)
+			is-installed openssl
+
+			echo -e "Running OpenSSL RSA4096..\n"
+
+			test-openssl $TEST_ITERATIONS 
 			;;
 		*)
 			echo -e "Test not found.\n"
@@ -100,7 +107,22 @@ function compress-generic {
 		sleep 2
 	done
 
-	print-result $_AVG $1
+	print-result $_AVG $1 's'
+}
+
+function test-openssl {
+	for ((i=1; i <= $1; i++))
+	do
+		_TEST=`openssl speed -mr rsa4096 2>&1 1>/dev/null`
+
+		_RES=`echo $_TEST | cut -d' ' -f2 | cut -d: -f4`
+
+		_AVG=`echo $_AVG $_RES | awk '{printf("%f", $1+$2)}'`
+
+		echo "  #$i	$_RES signs/s"
+	done
+
+	print-result $_AVG $1 ' signs/s'
 }
 
 
@@ -129,6 +151,10 @@ function display-tests {
 	echo "  compress-bz2            use BZIP2"
 	echo "  compress-lzo            use LZOP"
 	echo "  compress-7z             use 7z"
+	echo
+	echo "Tests"
+	echo
+	echo "  openssl                 OpenSSL RSA4096"
 }
 
 
