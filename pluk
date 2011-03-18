@@ -5,9 +5,9 @@ VERSION="0.3"
 #	Settings
 
 DUMMY="/tmp/.dummy-$RANDOM"
-DUMMY_SIZE="1024"
+DUMMY_SIZE="256"
 
-TEST_ITERATIONS="1"
+TEST_ITERATIONS="3"
 
 
 
@@ -21,7 +21,9 @@ function rm-dummy { rm -f $DUMMY*; }
 
 function diff-time { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
 
-function parse-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`s"; }
+function print-dummy { echo -e "Dummy $DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
+
+function print-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`s"; }
 
 function run-test {
 	case $1 in
@@ -49,7 +51,7 @@ function run-test {
 		compress-lzo)
 			is-installed lzop
 
-			echo -e "Running LZO Compression..\n"
+			echo -e "Running LZOP Compression..\n"
 
 			compress-generic $TEST_ITERATIONS "lzop -q $DUMMY"
 			;;
@@ -75,6 +77,8 @@ function run-test {
 #	Tests
 
 function compress-generic {
+	print-dummy
+
 	for ((i=1; i <= $1; i++))
 	do
 		mk-dummy
@@ -92,9 +96,11 @@ function compress-generic {
 		echo "  #$i	$_RES"s
 
 		rm-dummy
+
+		sleep 2
 	done
 
-	parse-result $_AVG $1
+	print-result $_AVG $1
 }
 
 
@@ -110,19 +116,19 @@ function display-help {
 	echo "  -l		display available tests"
 	echo "  -v              display version number"
 	echo
-	echo "  -n <N>          number of tests (default 1)"
-	echo "  -s <N>          size of the dummy file in MB (default 1024)"
+	echo "  -n <N>          number of tests (default 3)"
+	echo "  -s <N>          size of the dummy file in MB (default 256)"
 	echo "  -t <test>	run specific test"
 }
 
 function display-tests {
 	echo "Compress Tests"
 	echo
-	echo "  compress-gz             GZIP algorithm"
-	echo "  compress-xz             XZ algorithm"
-	echo "  compress-bz2            BZIP2 algorithm"
-	echo "  compress-lzo            LZO algorithm"
-	echo "  compress-7z             LZMA algorithm"
+	echo "  compress-gz             use GZIP"
+	echo "  compress-xz             use XZ"
+	echo "  compress-bz2            use BZIP2"
+	echo "  compress-lzo            use LZOP"
+	echo "  compress-7z             use 7z"
 }
 
 
