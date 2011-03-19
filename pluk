@@ -4,8 +4,10 @@ VERSION="0.3"
 
 #	Settings
 
-DUMMY="/tmp/.dummy-$RANDOM"
-DUMMY_SIZE="256"
+TEST_PATH="/tmp/"
+
+TEST_DUMMY="$TEST_PATH.dummy-$RANDOM"
+TEST_DUMMY_SIZE="256"
 
 TEST_ITERATIONS="3"
 
@@ -15,13 +17,13 @@ TEST_ITERATIONS="3"
 
 function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please, install it." >&2; exit 1; }; }
 
-function mk-dummy { dd if=/dev/zero of=$DUMMY bs=1MB count=$DUMMY_SIZE >/dev/null 2>&1; }
+function mk-dummy { dd if=/dev/zero of=$TEST_DUMMY bs=1MB count=$TEST_DUMMY_SIZE >/dev/null 2>&1; }
 
-function rm-dummy { rm -f $DUMMY*; }
+function rm-dummy { rm -f $TEST_DUMMY*; }
 
 function diff-time { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
 
-function print-dummy { echo -e "Dummy $DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
+function print-dummy { echo -e "Dummy $TEST_DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
 
 function print-result { echo -e "\nAverage: `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`$3"; }
 
@@ -32,35 +34,42 @@ function run-test {
 
 			echo -e "Running GZIP Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "gzip -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "gzip -q $TEST_DUMMY"
 			;;
 		compress-xz)
 			is-installed xz
 
 			echo -e "Running XZ Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "xz -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "xz -q $TEST_DUMMY"
 			;;
 		compress-bz2)
 			is-installed bzip2
 
 			echo -e "Running BZIP2 Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "bzip2 -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "bzip2 -q $TEST_DUMMY"
 			;;
 		compress-lzo)
 			is-installed lzop
 
 			echo -e "Running LZO Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "lzop -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "lzop -q $TEST_DUMMY"
 			;;
 		compress-7z)
 			is-installed 7z
 
 			echo -e "Running 7z Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY"
+			generic-iteration $TEST_ITERATIONS "7z -bd a $TEST_DUMMY.7z $TEST_DUMMY"
+			;;
+		7z-bench)
+			is-installed 7z
+
+			echo -e "Running 7z Benchmark..\n"
+
+			test-7z
 			;;
 		openssl)
 			is-installed openssl
@@ -74,7 +83,7 @@ function run-test {
 
 			echo -e "Running GPG..\n"
 
-			generic-iteration $TEST_ITERATIONS "gpg -c --passphrase $RANDOM -o /dev/null $DUMMY"
+			generic-iteration $TEST_ITERATIONS "gpg -c --passphrase $RANDOM -o /dev/null $TEST_DUMMY"
 			;;
 		*)
 			echo -e "Test not found.\n"
@@ -132,6 +141,25 @@ function test-openssl {
 	print-result $_AVG $1 ' signs/s'
 }
 
+function test-7z {
+	TEST_DUMMY_7z=$TEST_PATH.7z-benchmark
+
+	7z b > $TEST_DUMMY_7z
+
+	for ((i=2; i <= 5; i++))
+	do
+		_VALUE=`cat $TEST_DUMMY_7z | grep 2$i: | cut -d' ' -f5`
+
+		echo "#$(($i-1))  $_VALUE"
+
+		_AVG=`echo $_AVG $_VALUE | awk '{printf("%d", $1+$2)}'`
+	done
+
+	rm $TEST_DUMMY_7z
+
+	print-result $_AVG '4' 'mips'
+}
+
 
 
 #	Lists
@@ -151,7 +179,7 @@ function display-help {
 }
 
 function display-tests {
-	echo "Compress Tests"
+	echo "Poocessor"
 	echo
 	echo "  compress-gz             use GZIP"
 	echo "  compress-xz             use XZ"
@@ -159,8 +187,7 @@ function display-tests {
 	echo "  compress-lzo            use LZOP"
 	echo "  compress-7z             use 7z"
 	echo
-	echo "Tests"
-	echo
+	echo "  7z-bench                7z Benchmark"
 	echo "  openssl                 OpenSSL RSA4096"
 	echo "  gnupg                   GPG Key"
 }
