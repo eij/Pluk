@@ -32,35 +32,35 @@ function run-test {
 
 			echo -e "Running GZIP Compression..\n"
 
-			compress-generic $TEST_ITERATIONS "gzip -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "gzip -q $DUMMY"
 			;;
 		compress-xz)
 			is-installed xz
 
 			echo -e "Running XZ Compression..\n"
 
-			compress-generic $TEST_ITERATIONS "xz -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "xz -q $DUMMY"
 			;;
 		compress-bz2)
 			is-installed bzip2
 
 			echo -e "Running BZIP2 Compression..\n"
 
-			compress-generic $TEST_ITERATIONS "bzip2 -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "bzip2 -q $DUMMY"
 			;;
 		compress-lzo)
 			is-installed lzop
 
 			echo -e "Running LZO Compression..\n"
 
-			compress-generic $TEST_ITERATIONS "lzop -q $DUMMY"
+			generic-iteration $TEST_ITERATIONS "lzop -q $DUMMY"
 			;;
 		compress-7z)
 			is-installed 7z
 
 			echo -e "Running 7z Compression..\n"
 
-			compress-generic $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY"
+			generic-iteration $TEST_ITERATIONS "7z -bd a $DUMMY.7z $DUMMY"
 			;;
 		openssl)
 			is-installed openssl
@@ -68,6 +68,13 @@ function run-test {
 			echo -e "Running OpenSSL RSA4096..\n"
 
 			test-openssl $TEST_ITERATIONS 
+			;;
+		gnupg)
+			is-installed gpg
+
+			echo -e "Running GPG..\n"
+
+			generic-iteration $TEST_ITERATIONS "gpg -c --passphrase $RANDOM -o /dev/null $DUMMY"
 			;;
 		*)
 			echo -e "Test not found.\n"
@@ -83,7 +90,7 @@ function run-test {
 
 #	Tests
 
-function compress-generic {
+function generic-iteration {
 	print-dummy
 
 	for ((i=1; i <= $1; i++))
@@ -155,6 +162,7 @@ function display-tests {
 	echo "Tests"
 	echo
 	echo "  openssl                 OpenSSL RSA4096"
+	echo "  gnupg                   GPG Key"
 }
 
 
