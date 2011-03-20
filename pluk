@@ -212,7 +212,7 @@ do
 			TEST_ITERATIONS=$OPTARG
 			;;
 		s)
-			DUMMY_SIZE=$OPTARG
+			TEST_DUMMY_SIZE=$OPTARG
 			;;
 		t)
 			run-test $OPTARG
