@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.4"
+VERSION="0.5"
 
 #	Settings
 
@@ -11,6 +11,9 @@ TEST_DUMMY_SIZE="256"
 
 TEST_ITERATIONS="3"
 
+TEST_PROGRESS="n"
+TEST_PROGRESS_BAR="pv -p $TEST_DUMMY"
+
 
 
 #	Generic Functions
@@ -20,6 +23,8 @@ function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please,
 function mk-dummy { dd if=/dev/zero of=$TEST_DUMMY bs=1MB count=$TEST_DUMMY_SIZE >/dev/null 2>&1; }
 
 function rm-dummy { rm -f $TEST_DUMMY*; }
+
+function test-abort { rm-dummy; echo; exit 0; }
 
 function diff-time { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
 
@@ -34,35 +39,65 @@ function run-test {
 
 			echo -e "Running GZIP Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "gzip -q $TEST_DUMMY"
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="$TEST_PROGRESS_BAR | gzip > $TEST_DUMMY.gz"
+			else
+				TEST_COMMAND="gzip -q $TEST_DUMMY"
+			fi
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-xz)
 			is-installed xz
 
 			echo -e "Running XZ Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "xz -q $TEST_DUMMY"
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="$TEST_PROGRESS_BAR | xz > $TEST_DUMMY.xz"
+			else
+				TEST_COMMAND="xz $TEST_DUMMY"
+			fi
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-bz2)
 			is-installed bzip2
 
 			echo -e "Running BZIP2 Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "bzip2 -q $TEST_DUMMY"
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="$TEST_PROGRESS_BAR | bzip2 > $TEST_DUMMY.bz2"
+			else
+				TEST_COMMAND="bzip2 $TEST_DUMMY"
+			fi
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-lzo)
 			is-installed lzop
 
 			echo -e "Running LZO Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "lzop -q $TEST_DUMMY"
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="$TEST_PROGRESS_BAR | lzop > $TEST_DUMMY.lzo"
+			else
+				TEST_COMMAND="lzop $TEST_DUMMY"
+			fi
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-7z)
 			is-installed 7z
 
 			echo -e "Running 7z Compression..\n"
 
-			generic-iteration $TEST_ITERATIONS "7z -bd a $TEST_DUMMY.7z $TEST_DUMMY"
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="$TEST_PROGRESS_BAR | 7z -bd -si a $TEST_DUMMY.7z >/dev/null 2>&1"
+			else
+				TEST_COMMAND="7z -bd a $TEST_DUMMY.7z $TEST_DUMMY >/dev/null 2>&1"
+			fi
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		7z-bench)
 			is-installed 7z
@@ -83,7 +118,13 @@ function run-test {
 
 			echo -e "Running GPG..\n"
 
-			generic-iteration $TEST_ITERATIONS "gpg -c --passphrase $RANDOM -o /dev/null $TEST_DUMMY"
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="$TEST_PROGRESS_BAR | gpg -c --passphrase $RANDOM -o /dev/null -"
+			else
+				TEST_COMMAND="gpg -c --passphrase $RANDOM -o /dev/null $TEST_DUMMY"
+			fi
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		*)
 			echo -e "Test not found.\n"
@@ -94,6 +135,8 @@ function run-test {
 			;;
 	esac
 }
+
+trap test-abort INT
 
 
 
@@ -108,7 +151,7 @@ function generic-iteration {
 
 		_START=`date +%s.%N`
 
-		$2 >/dev/null 2>&1
+		eval $2
 
 		_STOP=`date +%s.%N`
 
@@ -173,6 +216,7 @@ function display-help {
 	echo "  -l		display available tests"
 	echo "  -v              display version number"
 	echo
+	echo "  -p              use progress bar (works for most of the tests)"
 	echo "  -n <N>          number of tests (default 3)"
 	echo "  -s <N>          size of the dummy file in MB (default 256)"
 	echo "  -t <test>	run specific test"
@@ -194,7 +238,7 @@ function display-tests {
 
 
 
-while getopts  "hlvs:n:t:" OPT
+while getopts  "hlvps:n:t:" OPT
 do
 
 	case $OPT in
@@ -207,6 +251,9 @@ do
 			display-tests
 
 			exit 0
+			;;
+		p)
+			TEST_PROGRESS="y"
 			;;
 		n)
 			TEST_ITERATIONS=$OPTARG
