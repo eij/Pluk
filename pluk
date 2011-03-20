@@ -232,3 +232,9 @@ do
 	esac
 
 done
+
+if [ "$OPTIND" -eq "1" ]; then
+	display-help
+fi
+
+exit 0
