@@ -316,6 +316,8 @@ do
 			exit 0
 			;;
 		g)
+			is-installed zenity
+
 			run-test `display-gui`
 
 			exit 0
