@@ -292,8 +292,8 @@ function display-gui {
 		false "compress-bz2" "Processor" "Compress a file using BZip2." \
 		false "compress-lzo" "Processor" "Compress a file using LZOP." \
 		false "compress-7z" "Processor" "Compress a file using 7Zip." \
-		false "Pi" "Processor" "Calculate Pi, 5k decimals." \
-		false "Exp" "Processor" "Calculate EXP(1), 2k decimals." \
+		false "pi" "Processor" "Calculate Pi, 5k decimals." \
+		false "exponential" "Processor" "Calculate EXP(1), 2k decimals." \
 		false "7zip" "Processor" "7Zip native benchmark." \
 		false "openssl" "Processor" "Calculate OpenSSL RSA4096." \
 		false "gnupg" "Processor" "Generate GPG key of a dummy file."
