@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.5"
+VERSION="0.6"
 
 #	Settings
 
@@ -45,7 +45,7 @@ function run-test {
 				TEST_COMMAND="gzip -q $TEST_DUMMY"
 			fi
 
-			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-xz)
 			is-installed xz
@@ -58,7 +58,7 @@ function run-test {
 				TEST_COMMAND="xz $TEST_DUMMY"
 			fi
 
-			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-bz2)
 			is-installed bzip2
@@ -71,7 +71,7 @@ function run-test {
 				TEST_COMMAND="bzip2 $TEST_DUMMY"
 			fi
 
-			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-lzo)
 			is-installed lzop
@@ -84,7 +84,7 @@ function run-test {
 				TEST_COMMAND="lzop $TEST_DUMMY"
 			fi
 
-			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		compress-7z)
 			is-installed 7z
@@ -97,9 +97,9 @@ function run-test {
 				TEST_COMMAND="7z -bd a $TEST_DUMMY.7z $TEST_DUMMY >/dev/null 2>&1"
 			fi
 
-			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
-		7z-bench)
+		7zip)
 			is-installed 7z
 
 			echo -e "Running 7z Benchmark..\n"
@@ -124,6 +124,20 @@ function run-test {
 				TEST_COMMAND="gpg -c --passphrase $RANDOM -o /dev/null $TEST_DUMMY"
 			fi
 
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			;;
+		pi)
+			echo -e "Running PI..\n"
+
+			TEST_COMMAND="echo 'scale=5000; 4*a(1)' | bc -l > /dev/null"
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			;;
+		exponential)
+			echo -e "Running EXP..\n"
+
+			TEST_COMMAND="echo 'scale=4000; e(1)' | bc -l > /dev/null"
+
 			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		*)
@@ -143,6 +157,27 @@ trap test-abort INT
 #	Tests
 
 function generic-iteration {
+	for ((i=1; i <= $1; i++))
+	do
+
+		_START=`date +%s.%N`
+
+		eval $2
+
+		_STOP=`date +%s.%N`
+
+		_RES=`diff-time $_STOP $_START`
+
+		_AVG=`echo $_AVG $_RES | awk '{printf("%.2f", $1+$2)}'`
+
+		echo "  #$i	$_RES"s
+
+	done
+
+	print-result $_AVG $1 's'
+}
+
+function generic-dummy-iteration {
 	print-dummy
 
 	for ((i=1; i <= $1; i++))
@@ -212,28 +247,37 @@ function display-version { echo -e "Pluk $VERSION\nA simple benchmarking tool.";
 function display-help {
 	echo "Usage: pluk [OPTIONS] -t <TEST>"
 	echo
-	echo "  -h		display this help"
-	echo "  -l		display available tests"
-	echo "  -v              display version number"
+	echo "  -h               display this help"
+	echo "  -l               display available tests"
+	echo "  -v               display version number"
 	echo
-	echo "  -p              use progress bar (works for most of the tests)"
-	echo "  -n <N>          number of tests (default 3)"
-	echo "  -s <N>          size of the dummy file in MB (default 256)"
-	echo "  -t <test>	run specific test"
+	echo "  -p               use progress bar (works for most of the tests)"
+	echo "  -n <NUM>         number of tests (default 3)"
+	echo "  -s <NUM>         size of the dummy file in MB (default 256)"
+	echo "  -t <TEST>        run specific test"
 }
 
 function display-tests {
-	echo "Poocessor"
+	echo "  Compress"
 	echo
-	echo "  compress-gz             use GZIP"
-	echo "  compress-xz             use XZ"
-	echo "  compress-bz2            use BZIP2"
-	echo "  compress-lzo            use LZOP"
-	echo "  compress-7z             use 7z"
+	echo "    compress-gz             use GZIP"
+	echo "    compress-xz             use XZ"
+	echo "    compress-bz2            use BZIP2"
+	echo "    compress-lzo            use LZOP"
+	echo "    compress-7z             use 7z"
 	echo
-	echo "  7z-bench                7z Benchmark"
-	echo "  openssl                 OpenSSL RSA4096"
-	echo "  gnupg                   GPG Key"
+	echo
+	echo "  Mathematical"
+	echo
+	echo "    pi                      calculate PI, 5k numbers after the comma"
+	echo "    exponential             calculate EXP(1), 4k numbers after the comma"
+	echo
+	echo
+	echo "  Various"
+	echo
+	echo "    7zip                    7z native benchmark"
+	echo "    openssl                 calculate OpenSSL RSA4096"
+	echo "    gnupg                   generate GPG Key of a dummy file"
 }
 
 
