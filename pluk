@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.6"
+VERSION="0.7"
 
 #	Settings
 
@@ -264,17 +264,17 @@ function display-help {
 function display-tests {
 	echo "  Compress"
 	echo
-	echo "    compress-gz             use GZIP"
-	echo "    compress-xz             use XZ"
-	echo "    compress-bz2            use BZIP2"
-	echo "    compress-lzo            use LZOP"
-	echo "    compress-7z             use 7z"
+	echo "    compress-gz             compress using GZIP"
+	echo "    compress-xz             compress using XZ"
+	echo "    compress-bz2            compress using BZIP2"
+	echo "    compress-lzo            compress using LZOP"
+	echo "    compress-7z             compress using 7z"
 	echo
 	echo
 	echo "  Mathematical"
 	echo
-	echo "    pi                      calculate PI, 5k numbers after the comma"
-	echo "    exponential             calculate EXP(1), 4k numbers after the comma"
+	echo "    pi                      calculate PI, 5k decimals"
+	echo "    exponential             calculate EXP(1), 4k decimals"
 	echo
 	echo
 	echo "  Various"
@@ -284,9 +284,24 @@ function display-tests {
 	echo "    gnupg                   generate GPG Key of a dummy file"
 }
 
+function display-gui {
+	zenity --title "Pluk" --text "Please choose a test from the list below" --width=450 --height=320 \
+		--list --radiolist --column="" --column="Name" --column="Type" --column="Description" \
+		true "compress-gz" "Processor" "Compress a file using GZip." \
+		false "compress-xz" "Processor" "Compress a file using XZ." \
+		false "compress-bz2" "Processor" "Compress a file using BZip2." \
+		false "compress-lzo" "Processor" "Compress a file using LZOP." \
+		false "compress-7z" "Processor" "Compress a file using 7Zip." \
+		false "Pi" "Processor" "Calculate Pi, 5k decimals." \
+		false "Exp" "Processor" "Calculate EXP(1), 2k decimals." \
+		false "7zip" "Processor" "7Zip native benchmark." \
+		false "openssl" "Processor" "Calculate OpenSSL RSA4096." \
+		false "gnupg" "Processor" "Generate GPG key of a dummy file."
+}
 
 
-while getopts  "hlvps:n:t:" OPT
+
+while getopts  "hlgvps:n:t:" OPT
 do
 
 	case $OPT in
@@ -297,6 +312,11 @@ do
 			;;
 		l)
 			display-tests
+
+			exit 0
+			;;
+		g)
+			run-test `display-gui`
 
 			exit 0
 			;;
