@@ -145,9 +145,11 @@ function run-test {
 			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		*)
-			echo -e "Test not found.\n"
+			if [ -z "$TEST_GUI" ]; then
+				echo -e "Test not found.\n"
 
-			display-tests
+				display-tests
+			fi
 
 			exit 0
 			;;
@@ -253,6 +255,7 @@ function display-help {
 	echo
 	echo "  -h               display this help"
 	echo "  -l               display available tests"
+	echo "  -g               display available tests from a gui"
 	echo "  -v               display version number"
 	echo
 	echo "  -p               use progress bar (works for most of the tests)"
@@ -318,6 +321,8 @@ do
 		g)
 			is-installed zenity
 
+			TEST_GUI=y
+
 			run-test `display-gui`
 
 			exit 0
@@ -349,6 +354,7 @@ do
 	esac
 
 done
+
 
 if [ "$OPTIND" -eq "1" ]; then
 	display-help
