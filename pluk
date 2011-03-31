@@ -127,14 +127,18 @@ function run-test {
 			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		pi)
-			echo -e "Running PI..\n"
+			is-installed bc
+
+			echo -e "Running Pi..\n"
 
 			TEST_COMMAND="echo 'scale=5000; 4*a(1)' | bc -l > /dev/null"
 
 			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND"
 			;;
 		exponential)
-			echo -e "Running EXP..\n"
+			is-installed bc
+
+			echo -e "Running Exponential..\n"
 
 			TEST_COMMAND="echo 'scale=4000; e(1)' | bc -l > /dev/null"
 
