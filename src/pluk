@@ -45,9 +45,7 @@ function print-dummy { echo -e "Dummy $TEST_DUMMY_SIZE mb, $TEST_ITERATIONS time
 function process-result {
 	_RES=`echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`
 
-	# TEST_LIST["$TEST_ACTIVE"]="${TEST_LIST[$TEST_ACTIVE]@]}:$TEST_DUMMY_SIZE|$_RES$3"
-
-	TEST_LIST["$TEST_ACTIVE"]="${TEST_LIST[$TEST_ACTIVE]@]}, $_RES"
+	TEST_LIST["$TEST_ACTIVE"]="${TEST_LIST[$TEST_ACTIVE]@}, $_RES"
 
 	echo -e "\nAverage: $_RES$3";
 }
