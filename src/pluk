@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.8.2"
+VERSION="0.8.3"
 
 #	Settings
 
@@ -76,7 +76,7 @@ function make-report {
 
 					for (i = 0; i < result[key].length; i++) result_max = Math.max(result_max, result[key][i]);
 
-					$("#bars").append('\''<span class="desc">'\'' + key + '\''</span>'\'');
+					$("#bars").append('\''<div class="desc">'\'' + key + '\''</div>'\'');
 
 					for (v in result[key]) {
 						bar = $('\''<span class="bar">'\'' + result[key][v] + '\''</span>'\'');
@@ -85,6 +85,8 @@ function make-report {
 
 						bar.animate({"width": (100 * result[key][v] / result_max) + "%"}, "slow");
 					}
+
+					$("#bars").append('\''<div class="spacer"></div>'\'');
 				}
 			});
 		</script>
@@ -95,7 +97,9 @@ function make-report {
 			#container { width: 800px; text-align: center; margin: auto; }
 			#bars { width: 500px; margin: auto; text-align: left; }
 
-			.desc { color: #666; margin: 10px; }
+			.spacer { height: 80px; }
+
+			.desc { color: #666; margin: 20px; text-shadow: 0px 0px 1px #ccc; }
 
 			.bar { color: #333; font-size: 0.9em; text-shadow: 1px 1px 1px #ccc;
 				display: block; width: 0px; min-height: 10px; background-color: #ccc; padding: 5px; margin-bottom: 20px;
@@ -450,7 +454,7 @@ do
 done
 
 if [ "$TEST_REPORT" == "y" ]; then
-	echo -e "\nMaking report.."
+	echo -e "\nMaking report.. $TEST_REPORT_FILE"
 
 	make-report
 fi
