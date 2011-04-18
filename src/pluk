@@ -1,6 +1,10 @@
 #!/bin/bash
 
+<<<<<<< HEAD
 VERSION="0.9"
+=======
+VERSION="0.8.3"
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 #	Settings
 
@@ -14,6 +18,7 @@ TEST_ITERATIONS="3"
 TEST_PROGRESS="n"
 TEST_PROGRESS_BAR="pv -p $TEST_DUMMY"
 
+<<<<<<< HEAD
 
 
 #	Functions
@@ -38,6 +43,119 @@ function float-sum { echo $1 $2 | awk '{printf("%.2f", $1+$2)}'; }
 function test-result { echo -e "\nAverage `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`$3"; }
 
 function test-run {
+=======
+TEST_REPORT="n"
+TEST_REPORT_PATH="$HOME"
+TEST_REPORT_FILE="$TEST_REPORT_PATH/Report-$RANDOM.html"
+
+declare -A TEST_LIST
+
+
+
+#	Generic Functions
+
+function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please, install it." >&2; exit 1; }; }
+
+function mk-dummy {
+	if [[ `uname -s` == "Linux" ]]; then
+		dd if=/dev/zero of=$TEST_DUMMY bs=1000000 count=$TEST_DUMMY_SIZE >/dev/null 2>&1;
+	elif [[ `uname -s` == "Darwin" ]]; then
+		dd if=/dev/zero of=$TEST_DUMMY bs=1MB count=$TEST_DUMMY_SIZE >/dev/null 2>&1;
+	fi
+}
+
+function rm-dummy { rm -f $TEST_DUMMY*; }
+
+function test-abort { rm-dummy; echo; exit 0; }
+
+function diff-time { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
+
+function print-dummy { echo -e "Dummy $TEST_DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
+
+function process-result {
+	_RES=`echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`
+
+	TEST_LIST["$TEST_ACTIVE"]="${TEST_LIST[$TEST_ACTIVE]@}, $_RES"
+
+	echo -e "\nAverage: $_RES$3";
+}
+
+function make-report {
+	echo '<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Report</title>
+
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+
+		<script type="text/javascript">
+			$(function(){
+				result = new Array();' > $TEST_REPORT_FILE
+
+	for i in ${!TEST_LIST[@]}
+	do
+		VALUES=`echo ${TEST_LIST[$i]} | awk '{print substr($0, 3)}'`
+
+		echo "				result['$i'] = [ $VALUES ];" >> $TEST_REPORT_FILE
+	done
+
+	echo '
+
+				for (key in result) {
+					result_max = result[key][0];
+
+					for (i = 0; i < result[key].length; i++) result_max = Math.max(result_max, result[key][i]);
+
+					$("#bars").append('\''<div class="desc">'\'' + key + '\''</div>'\'');
+
+					for (v in result[key]) {
+						bar = $('\''<span class="bar">'\'' + result[key][v] + '\''</span>'\'');
+
+						$("#bars").append(bar);
+
+						bar.animate({"width": (100 * result[key][v] / result_max) + "%"}, "slow");
+					}
+
+					$("#bars").append('\''<div class="spacer"></div>'\'');
+				}
+			});
+		</script>
+
+		<style>
+			body { font-size: 12px; font-family: sans-serif; }
+
+			#container { width: 800px; text-align: center; margin: auto; }
+			#bars { width: 500px; margin: auto; text-align: left; }
+
+			.spacer { height: 80px; }
+
+			.desc { color: #666; margin: 20px; text-shadow: 0px 0px 1px #ccc; }
+
+			.bar { color: #333; font-size: 0.9em; text-shadow: 1px 1px 1px #ccc;
+				display: block; width: 0px; min-height: 10px; background-color: #ccc; padding: 5px; margin-bottom: 20px;
+				-webkit-box-shadow: 1px 1px 2px #ccc; -moz-box-shadow: 1px 1px 2px #ccc; box-shadow: 1px 1px 2px #ccc;
+				-moz-border-radius-topright: 3px; -moz-border-radius-bottomright: 3px; border-top-right-radius: 3px; border-bottom-right-radius: 3px;
+
+				background: #ffffff; background: -moz-linear-gradient(top, #ffffff 0%, #e5e5e5 100%);
+				background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#e5e5e5));
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='\''#ffffff'\'', endColorstr='\''#e5e5e5'\'',GradientType=0 );
+			}
+			.bar:hover { filter: alpha(opacity=50); -moz-opacity: 0.5; -khtml-opacity: 0.5; opacity: 0.5; }
+		</style>
+	</head>
+
+	<body>
+		<div id="container">
+			<div id="bars"></div>
+		</div>
+	</body>
+</html>' >> $TEST_REPORT_FILE
+}
+
+function run-test {
+	TEST_ACTIVE="$1"
+
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 	unset _AVG
 
 	case $1 in
@@ -163,9 +281,13 @@ function test-run {
 	esac
 }
 
+<<<<<<< HEAD
 function test-end { dummy-rm; echo; exit 0; }
 
 trap test-end INT
+=======
+trap test-abort INT
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 
 
@@ -181,14 +303,21 @@ function generic-iteration {
 
 		_STOP=`date +%s.%N`
 
+<<<<<<< HEAD
 		_RES=`float-sub $_STOP $_START`
 
 		_AVG=`float-sum $_AVG $_RES`
+=======
+		_RES=`diff-time $_STOP $_START`
+
+		_AVG=`echo $_AVG $_RES | awk '{printf("%.2f", $1+$2)}'`
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 		echo "  #$i	$_RES"s
 
 	done
 
+<<<<<<< HEAD
 	test-result $_AVG $1 's'
 }
 
@@ -198,6 +327,17 @@ function generic-dummy-iteration {
 	for ((i=1; i <= $1; i++))
 	do
 		dummy-mk
+=======
+	process-result $_AVG $1 's'
+}
+
+function generic-dummy-iteration {
+	print-dummy
+
+	for ((i=1; i <= $1; i++))
+	do
+		mk-dummy
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 		_START=`date +%s.%N`
 
@@ -205,6 +345,7 @@ function generic-dummy-iteration {
 
 		_STOP=`date +%s.%N`
 
+<<<<<<< HEAD
 		_RES=`float-sub $_STOP $_START`
 
 		echo "  #$i	$_RES"s
@@ -212,11 +353,24 @@ function generic-dummy-iteration {
 		_AVG=`float-sum $_AVG $_RES`
 
 		dummy-rm
+=======
+		_RES=`diff-time $_STOP $_START`
+
+		_AVG=`echo $_AVG $_RES | awk '{printf("%.2f", $1+$2)}'`
+
+		echo "  #$i	$_RES"s
+
+		rm-dummy
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 		sleep 2
 	done
 
+<<<<<<< HEAD
 	test-result $_AVG $1 's'
+=======
+	process-result $_AVG $1 's'
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 }
 
 function test-openssl {
@@ -226,12 +380,21 @@ function test-openssl {
 
 		_RES=`echo $_TEST | cut -d' ' -f2 | cut -d: -f4`
 
+<<<<<<< HEAD
 		echo "  #$i	$_RES signs/s"
 
 		_AVG=`float-sum $_AVG $_RES`
 	done
 
 	test-result $_AVG $1 ' signs/s'
+=======
+		_AVG=`echo $_AVG $_RES | awk '{printf("%f", $1+$2)}'`
+
+		echo "  #$i	$_RES signs/s"
+	done
+
+	process-result $_AVG $1 ' signs/s'
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 }
 
 function test-7z {
@@ -245,19 +408,31 @@ function test-7z {
 
 		echo "#$(($i-1))  $_VALUE"
 
+<<<<<<< HEAD
 		_AVG=`float-sum $_AVG $_VALUE`
+=======
+		_AVG=`echo $_AVG $_VALUE | awk '{printf("%d", $1+$2)}'`
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 	done
 
 	rm $TEST_DUMMY_7z
 
+<<<<<<< HEAD
 	test-result $_AVG '4' 'mips'
+=======
+	process-result $_AVG '4' 'mips'
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 }
 
 
 
 #	Lists
 
+<<<<<<< HEAD
 function display-version { echo -e "Pluk $VERSION\nBenchmarking tool."; }
+=======
+function display-version { echo -e "Pluk $VERSION\nA simple benchmarking tool."; }
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 function display-help {
 	echo "Usage: pluk [OPTIONS] -t <TEST>"
@@ -268,6 +443,10 @@ function display-help {
 	echo "  -v               display version number"
 	echo
 	echo "  -p               use progress bar (works for most of the tests)"
+<<<<<<< HEAD
+=======
+	echo "  -r               make HTML report"
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 	echo "  -n NUM           number of tests (default 3)"
 	echo "  -s NUM           size of the dummy file in MB (default 256)"
 	echo "  -t TEST          run specific test"
@@ -313,8 +492,14 @@ function display-gui {
 
 
 
+<<<<<<< HEAD
 while getopts  "hlgvps:n:t:" OPT
 do
+=======
+while getopts  "hlgvprs:n:t:" OPT
+do
+
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 	case $OPT in
 		h)
 			display-help
@@ -331,15 +516,27 @@ do
 
 			TEST_GUI="y"
 
+<<<<<<< HEAD
 			test-run `display-gui`
+=======
+			run-test `display-gui`
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 
 			exit 0
 			;;
 		p)
+<<<<<<< HEAD
 			is-installed pv
 
 			TEST_PROGRESS="y"
 			;;
+=======
+			TEST_PROGRESS="y"
+			;;
+		r)
+			TEST_REPORT="y"
+			;;
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 		n)
 			TEST_ITERATIONS=$OPTARG
 			;;
@@ -347,7 +544,13 @@ do
 			TEST_DUMMY_SIZE=$OPTARG
 			;;
 		t)
+<<<<<<< HEAD
 			test-run $OPTARG
+=======
+			echo
+
+			run-test $OPTARG
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 			;;
 		v)
 			display-version
@@ -360,8 +563,20 @@ do
 			exit 0
 			;;
 	esac
+<<<<<<< HEAD
 done
 
+=======
+
+done
+
+if [ "$TEST_REPORT" == "y" ]; then
+	echo -e "\nMaking report.. $TEST_REPORT_FILE"
+
+	make-report
+fi
+
+>>>>>>> 1e45ccb05665e8cd8f1152f985bdeeeab912e75e
 if [ "$OPTIND" -eq "1" ]; then
 	display-help
 fi
