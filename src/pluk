@@ -16,7 +16,7 @@ TEST_PROGRESS_BAR="pv -p $TEST_DUMMY"
 
 
 
-#	Generic Functions
+#	Functions
 
 function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please, install it." >&2; exit 1; }; }
 
