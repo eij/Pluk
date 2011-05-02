@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.9.2"
+VERSION="0.9.3"
 
 #	Settings
 
@@ -20,20 +20,15 @@ TEST_PROGRESS_BAR="pv -p $TEST_DUMMY"
 
 function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please, install it." >&2; exit 1; }; }
 
-function dummy-mk {
-	case `uname -s` in
-		Linux) dd if=/dev/zero of=$TEST_DUMMY bs=1000000 count=$TEST_DUMMY_SIZE >/dev/null 2>&1 ;;
-		Darwin) dd if=/dev/zero of=$TEST_DUMMY bs=1MB count=$TEST_DUMMY_SIZE >/dev/null 2>&1 ;;
-	esac
-}
+function dummy-mk { dd if=/dev/zero of=$TEST_DUMMY bs=1000000 count=$TEST_DUMMY_SIZE >/dev/null 2>&1; }
 
 function dummy-rm { rm -f $TEST_DUMMY*; }
 
 function dummy-print { echo -e "Dummy $TEST_DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
 
-function float-sub { echo $1 $2 | awk '{printf("%.2f", $1-$2)}'; }
+function float-sub { echo $1 $2 | sed 's/N/0/' | awk '{printf("%.2f", $1-$2)}'; }
 
-function float-sum { echo $1 $2 | awk '{printf("%.2f", $1+$2)}'; }
+function float-sum { echo $1 $2 | sed 's/N/0/' | awk '{printf("%.2f", $1+$2)}'; }
 
 function test-result { echo -e "\nAverage `echo $1 $2 | awk '{printf("%.2f", $1/$2)}'`$3"; }
 
@@ -195,7 +190,6 @@ function fibonacci {
 function generic-iteration {
 	for ((i=1; i <= $1; i++))
 	do
-
 		_START=`date +%s.%N`
 
 		eval $2
@@ -207,7 +201,6 @@ function generic-iteration {
 		_AVG=`float-sum $_AVG $_RES`
 
 		echo "  #$i	$_RES"s
-
 	done
 
 	test-result $_AVG $1 's'
