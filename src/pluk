@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.9.3"
+VERSION="1.0"
 
 #	Settings
 
@@ -18,11 +18,31 @@ TEST_PROGRESS_BAR="pv -p $TEST_DUMMY"
 
 #	Generic Functions
 
-function is-installed { type -P $1 &>/dev/null || { echo "$1 is missing. Please, install it." >&2; exit 1; }; }
+function is-installed {
+	type -P $1 &>/dev/null || {
+		if [ "$TEST_GUI" == "y" ]; then
+			zenity --error --title "Pluk" --text "$1 is missing. Please, install it."
+		else
+			echo "$1 is missing. Please, install it."
+		fi
 
-function dummy-mk { dd if=/dev/zero of=$TEST_DUMMY bs=1000000 count=$TEST_DUMMY_SIZE >/dev/null 2>&1; }
+		exit 1
+	}
+}
+
+function info-cpu-model { awk -F ':' '/^model name/ {print $2; exit}' /proc/cpuinfo | sed 's/^ *//'; }
+
+function info-cpu-number { grep '^processor' /proc/cpuinfo | wc -l; }
+
+function info-cpu-bogomips { awk -F ':' '/^bogomips/ {B += $2} END {print B}' /proc/cpuinfo; }
+
+function info-kernel { uname -sr; }
+
+function dummy-mk { dd if=/dev/zero of=$TEST_DUMMY bs=1000000 count=$TEST_DUMMY_SIZE > /dev/null 2>&1; }
 
 function dummy-rm { rm -f $TEST_DUMMY*; }
+
+function dummy-rm-compressed { rm -f $TEST_DUMMY.*; }
 
 function dummy-print { echo -e "Dummy $TEST_DUMMY_SIZE mb, $TEST_ITERATIONS times\n"; }
 
@@ -36,6 +56,42 @@ function test-run {
 	unset _AVG
 
 	case $1 in
+		write)
+			echo -e "Running Write..\n"
+
+			PV_SIZE=$TEST_DUMMY_SIZE"M"
+
+			if [ "$TEST_DUMMY_SIZE" -lt "500" ]; then
+				TEST_DUMMY_SIZE="1024"
+			fi
+
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="dd if=/dev/zero bs=1000000 count=$TEST_DUMMY_SIZE 2>&1 | pv -s $PV_SIZE -p > $TEST_DUMMY"
+			else
+				TEST_COMMAND="dd if=/dev/zero of=$TEST_DUMMY bs=1000000 count=$TEST_DUMMY_SIZE > /dev/null 2>&1"
+			fi
+
+			TEST_CLOSE="sleep 1 && dummy-rm"
+
+			generic-iteration $TEST_ITERATIONS "$TEST_COMMAND" "$TEST_CLOSE"
+			;;
+		read)
+			echo -e "Running Read..\n"
+
+			PV_SIZE=$TEST_DUMMY_SIZE"M"
+
+			if [ "$TEST_DUMMY_SIZE" -lt "500" ]; then
+				TEST_DUMMY_SIZE="1024"
+			fi
+
+			if [ "$TEST_PROGRESS" == "y" ]; then
+				TEST_COMMAND="dd if=$TEST_DUMMY bs=64k 2>&1 | pv -ps $PV_SIZE | dd of=/dev/null > /dev/null 2>&1"
+			else
+				TEST_COMMAND="dd if=$TEST_DUMMY bs=64k 2>&1 | dd of=/dev/null > /dev/null 2>&1"
+			fi
+
+			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
+			;;
 		compress-gz)
 			is-installed gzip
 
@@ -44,7 +100,7 @@ function test-run {
 			if [ "$TEST_PROGRESS" == "y" ]; then
 				TEST_COMMAND="$TEST_PROGRESS_BAR | gzip > $TEST_DUMMY.gz"
 			else
-				TEST_COMMAND="gzip -q $TEST_DUMMY"
+				TEST_COMMAND="gzip -qc $TEST_DUMMY > $TEST_DUMMY.gz"
 			fi
 
 			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
@@ -57,7 +113,7 @@ function test-run {
 			if [ "$TEST_PROGRESS" == "y" ]; then
 				TEST_COMMAND="$TEST_PROGRESS_BAR | xz > $TEST_DUMMY.xz"
 			else
-				TEST_COMMAND="xz $TEST_DUMMY"
+				TEST_COMMAND="xz -c $TEST_DUMMY > $TEST_DUMMY.xz"
 			fi
 
 			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
@@ -70,7 +126,7 @@ function test-run {
 			if [ "$TEST_PROGRESS" == "y" ]; then
 				TEST_COMMAND="$TEST_PROGRESS_BAR | bzip2 > $TEST_DUMMY.bz2"
 			else
-				TEST_COMMAND="bzip2 $TEST_DUMMY"
+				TEST_COMMAND="bzip2 -c $TEST_DUMMY > $TEST_DUMMY.bz2"
 			fi
 
 			generic-dummy-iteration $TEST_ITERATIONS "$TEST_COMMAND"
@@ -196,6 +252,10 @@ function generic-iteration {
 
 		_STOP=`date +%s.%N`
 
+		if [ "$3" ]; then
+			eval $3
+		fi
+
 		_RES=`float-sub $_STOP $_START`
 
 		_AVG=`float-sum $_AVG $_RES`
@@ -209,9 +269,11 @@ function generic-iteration {
 function generic-dummy-iteration {
 	dummy-print
 
+	dummy-mk
+
 	for ((i=1; i <= $1; i++))
 	do
-		dummy-mk
+		sleep 2
 
 		_START=`date +%s.%N`
 
@@ -225,10 +287,12 @@ function generic-dummy-iteration {
 
 		_AVG=`float-sum $_AVG $_RES`
 
-		dummy-rm
+		dummy-rm-compressed
 
 		sleep 2
 	done
+
+	dummy-rm
 
 	test-result $_AVG $1 's'
 }
@@ -277,6 +341,7 @@ function display-help {
 	echo "Usage: pluk [OPTIONS] -t <TEST>"
 	echo
 	echo "  -h               display this help"
+	echo "  -i               display system informations"
 	echo "  -l               display available tests"
 	echo "  -g               display available tests from a gui"
 	echo "  -v               display version number"
@@ -288,7 +353,14 @@ function display-help {
 }
 
 function display-tests {
-	echo "  Compress"
+	echo "  Processor"
+	echo
+	echo "    pi                      calculate PI, 5k decimals"
+	echo "    exponential             calculate EXP(1), 4k decimals"
+	echo "    fibonacci               calculate Fibonacci(1kk)"
+	echo
+	echo "    openssl                 calculate OpenSSL RSA4096"
+	echo "    7zip                    7z native benchmark"
 	echo
 	echo "    compress-gz             compress using GZIP"
 	echo "    compress-xz             compress using XZ"
@@ -296,46 +368,51 @@ function display-tests {
 	echo "    compress-lzo            compress using LZOP"
 	echo "    compress-7z             compress using 7z"
 	echo
-	echo
-	echo "  Mathematical"
-	echo
-	echo "    pi                      calculate PI, 5k decimals"
-	echo "    exponential             calculate EXP(1), 4k decimals"
-	echo "    fibonacci               calculate Fibonacci(1kk)"
-	echo
-	echo
-	echo "  Various"
-	echo
-	echo "    7zip                    7z native benchmark"
-	echo "    openssl                 calculate OpenSSL RSA4096"
 	echo "    gnupg                   generate GPG Key of a dummy file"
+	echo
+	echo "  Disk"
+	echo
+	echo "    read                    reads a big file"
+	echo "    write                   writes a big file"
 }
 
 function display-gui {
-	zenity --title "Pluk" --text "Please choose a test from the list below" --width=450 --height=320 \
+	zenity --title "Pluk" --text "Please choose a test from the list below" --width=500 --height=400 \
 		--list --radiolist --column="" --column="Name" --column="Type" --column="Description" \
-		true "compress-gz" "Processor" "Compress a file using GZip." \
+		true "pi" "Processor" "Calculate Pi, 5k decimals." \
+		false "exponential" "Processor" "Calculate EXP(1), 2k decimals." \
+		false "fibonacci" "Processor" "Calculate Fibonacci(1kk)" \
+		false "openssl" "Processor" "Calculate OpenSSL RSA4096." \
+		false "7zip" "Processor" "7Zip native benchmark." \
+		false "compress-gz" "Processor" "Compress a file using GZip." \
 		false "compress-xz" "Processor" "Compress a file using XZ." \
 		false "compress-bz2" "Processor" "Compress a file using BZip2." \
 		false "compress-lzo" "Processor" "Compress a file using LZOP." \
 		false "compress-7z" "Processor" "Compress a file using 7Zip." \
-		false "pi" "Processor" "Calculate Pi, 5k decimals." \
-		false "exponential" "Processor" "Calculate EXP(1), 2k decimals." \
-		false "fibonacci" "Processor" "Calculate Fibonacci(1kk)" \
-		false "7zip" "Processor" "7Zip native benchmark." \
-		false "openssl" "Processor" "Calculate OpenSSL RSA4096." \
-		false "gnupg" "Processor" "Generate GPG key of a dummy file."
+		false "gnupg" "Processor" "Generate GPG key of a dummy file." \
+		false "read" "Disk" "Reads a big file." \
+		false "write" "Disk" "Writes a big file."
+}
+
+function display-info {
+	echo
+	echo "CPU          `info-cpu-model`, `info-cpu-number` cores. (`info-cpu-bogomips` bogomips)"
+	echo "KERNEL       `info-kernel`"
+	echo
 }
 
 
 
-while getopts  "hlgvps:n:t:" OPT
+while getopts  "hilgvps:n:t:" OPT
 do
 	case $OPT in
 		h)
 			display-help
 
 			exit 0
+			;;
+		i)
+			display-info
 			;;
 		l)
 			display-tests
@@ -363,7 +440,7 @@ do
 			TEST_DUMMY_SIZE=$OPTARG
 			;;
 		t)
-			test-run $OPTARG
+			TEST_NAME=$OPTARG
 			;;
 		v)
 			display-version
@@ -380,6 +457,10 @@ done
 
 if [ "$OPTIND" -eq "1" ]; then
 	display-help
+else
+	if [ "$TEST_NAME" ]; then
+		test-run $TEST_NAME
+	fi
 fi
 
 exit 0

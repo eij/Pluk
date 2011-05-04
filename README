@@ -1,68 +1,73 @@
 DESCRIPTION
-===========
 
-Simple benchmarking tool for Bash.
+
+	Simple benchmarking tool for BASH.
 
 
 USAGE
-=====
-
-To get a list of the available tests, use:
-
-	pluk -l
 
 
-Example using GZIP compression. Runs 3 times with a 500mb dummy:
+	To learn about the commands:
 
-	pluk -n3 -s500 -t compress-gz
+		pluk -h
+
+
+	To get a list of the available tests, use:
+
+		pluk -l
+
+
+	A quick example using GZIP compression. Runs 3 times with a 500mb dummy:
+
+		pluk -n3 -s500 -t compress-gz
 
 
 EXAMPLE
-=======
-
-Simple usage:
-
-	$ pluk -n5 -s500 -t compress-lzo
-
-	Running LZO Compression..
-
-	Dummy 500 mb, 5 times
-
-	  #1	2.60s
-	  #2	2.53s
-	  #3	2.36s
-	  #4	2.50s
-	  #5	2.44s
-
-	Average: 2.49s
 
 
-Using progress bar:
+	Simple usage:
 
-	$ ./pluk -p -n5 -s500 -t compress-lzo
+		$ pluk -n5 -s500 -t compress-lzo
 
-	Running LZO Compression..
+		Running LZO Compression..
 
-	Dummy 500 mb, 5 times
+		Dummy 500 mb, 5 times
 
-	[===================================================>] 100%
-	  #1	2.92s
-	[===================================================>] 100%
-	  #2	2.98s
-	[===================================================>] 100%
-	  #3	2.93s
-	[===================================================>] 100%
-	  #4	2.92s
-	[===================================================>] 100%
-	  #5	2.94s
+		  #1	2.60s
+		  #2	2.53s
+		  #3	2.36s
+		  #4	2.50s
+		  #5	2.44s
 
-Average: 2.94s *
+		Average: 2.49s
 
 
-* tested on a different Kernel.
+	Using progress bar:
+
+		$ ./pluk -p -n5 -s500 -t compress-lzo
+
+		Running LZO Compression..
+
+		Dummy 500 mb, 5 times
+
+		[===================================================>] 100%
+		  #1	2.92s
+		[===================================================>] 100%
+		  #2	2.98s
+		[===================================================>] 100%
+		  #3	2.93s
+		[===================================================>] 100%
+		  #4	2.92s
+		[===================================================>] 100%
+		  #5	2.94s
+
+	Average: 2.94s *
+
+
+	* tested on a different Kernel.
 
 
 LICENSE
-=======
 
-GPLv2, under docs/
+
+	GPLv2, under docs/
